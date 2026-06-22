@@ -1,0 +1,48 @@
+# ============================================================ #
+# Sensitive files — never commit
+# ============================================================ #
+
+# Local .env file — never commit (use .env.example as template; cp .env.example .env)
+/.env
+
+# ============================================================ #
+# Claude Code — kept local, never committed
+# ============================================================ #
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+
+# IDE / OS files
+/.idea/
+/.vscode/
+/.fleet/
+.DS_Store
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> symfony/asset-mapper ###
+/public/assets/
+/assets/vendor/
+###< symfony/asset-mapper ###
+
+###> symfonycasts/sass-bundle ###
+/public/assets/
+###< symfonycasts/sass-bundle ###
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

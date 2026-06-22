@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% macro nav_link(route, label, icon, active_prefix, count) %}
+    {% set current = app.request.attributes.get('_route') %}
+    {% set is_active = current starts with (active_prefix ?? route) %}
+    <a href="{{ path(route) }}" class="nav-link {{ is_active ? 'is-active' }}">
+        <span class="icon">{{ icon }}</span>
+        <span>{{ label }}</span>
+        {% if count is defined and count > 0 %}<span class="nav-link__count">{{ count }}</span>{% endif %}
+    </a>
+{% endmacro %}
+
+{% block layout %}
+    {% import _self as nav %}
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar__brand">
+                <span class="sidebar__logo">🛡️</span>
+                <span>Watcha</span>
+            </div>
+
+            {{ nav.nav_link('app_dashboard', 'Tableau de bord', '▣', 'app_dashboard') }}
+            {{ nav.nav_link('app_site_index', 'Mes sites', '🌐', 'app_site') }}
+            {{ nav.nav_link('app_advisory_index', 'Vulnérabilités', '🔎', 'app_advisory') }}
+            {% set alerts = open_alert_count() %}
+            <a href="{{ path('app_dashboard') }}#alertes" class="nav-link">
+                <span class="icon">⚠️</span><span>Alertes</span>
+                {% if alerts > 0 %}<span class="nav-link__count">{{ alerts }}</span>{% endif %}
+            </a>
+
+            {% if is_granted(constant('App\\Entity\\User::ROLE_MAINTAINER')) %}
+                <div class="sidebar__section">Administration</div>
+                {{ nav.nav_link('app_admin_user_index', 'Utilisateurs', '👥', 'app_admin_user', pending_user_count()) }}
+            {% endif %}
+
+            <div class="sidebar__spacer"></div>
+            <a href="{{ path('app_logout') }}" class="nav-link"><span class="icon">⏻</span><span>Déconnexion</span></a>
+        </aside>
+
+        <div class="main">
+            <header class="topbar">
+                <strong>{% block heading %}{% endblock %}</strong>
+                <div class="topbar__user">
+                    <span>{{ app.user.displayName ?: app.user.userIdentifier }}</span>
+                    {% set role = app.user.highestRole %}
+                    <span class="badge badge--info">
+                        {{- role == constant('App\\Entity\\User::ROLE_ADMIN') ? 'Admin'
+                          : (role == constant('App\\Entity\\User::ROLE_MAINTAINER') ? 'Maintainer' : 'Basic') -}}
+                    </span>
+                </div>
+            </header>
+
+            <main class="content">
+                {% for type, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert--{{ type == 'error' ? 'error' : (type == 'success' ? 'success' : 'info') }}">
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+{% endblock %}

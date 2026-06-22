@@ -1,0 +1,30 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Ajouter un site — Watcha{% endblock %}
+{% block heading %}Ajouter un site{% endblock %}
+
+{% block content %}
+    <div class="page-header"><div><h1>Ajouter un site</h1><p>Le site sera analysé immédiatement pour détecter sa technologie et sa version.</p></div></div>
+
+    <div class="card" style="max-width:560px">
+        <div class="card__body">
+            {{ form_start(form, {attr: {class: 'form'}}) }}
+                <div class="form-row">
+                    {{ form_label(form.name) }}
+                    {{ form_widget(form.name) }}
+                    {{ form_errors(form.name) }}
+                </div>
+                <div class="form-row">
+                    {{ form_label(form.url) }}
+                    {{ form_widget(form.url) }}
+                    {% if form.url.vars.help %}<span class="help">{{ form.url.vars.help }}</span>{% endif %}
+                    {{ form_errors(form.url) }}
+                </div>
+                <div class="row">
+                    <button class="btn" type="submit">Ajouter et analyser</button>
+                    <a href="{{ path('app_site_index') }}" class="btn btn--outline">Annuler</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

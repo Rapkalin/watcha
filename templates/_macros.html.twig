@@ -1,0 +1,16 @@
+{% macro severity_badge(severity) %}
+    {%- set v = severity.value -%}
+    <span class="badge badge--{{ v }}">{{ severity.label }}</span>
+{% endmacro %}
+
+{% macro tech_badge(technology) %}
+    {% if technology %}<span class="badge">{{ technology.label }}</span>{% else %}<span class="badge badge--unknown">Inconnu</span>{% endif %}
+{% endmacro %}
+
+{% macro alert_type_badge(type) %}
+    {%- if type.value == 'cve' -%}
+        <span class="badge badge--high">CVE</span>
+    {%- else -%}
+        <span class="badge badge--info">Mise à jour</span>
+    {%- endif -%}
+{% endmacro %}

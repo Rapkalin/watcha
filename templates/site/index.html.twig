@@ -1,0 +1,48 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as ui %}
+
+{% block title %}Mes sites — Watcha{% endblock %}
+{% block heading %}Mes sites{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <div>
+            <h1>Mes sites</h1>
+            <p>Sites surveillés et technologie détectée.</p>
+        </div>
+        <a href="{{ path('app_site_new') }}" class="btn">+ Ajouter un site</a>
+    </div>
+
+    {% if sites is empty %}
+        <div class="card"><div class="empty-state">
+            Aucun site pour le moment.<br>
+            <a href="{{ path('app_site_new') }}" class="btn mt-2">Ajouter mon premier site</a>
+        </div></div>
+    {% else %}
+        <div class="grid grid--cards">
+            {% for site in sites %}
+                <div class="card">
+                    <div class="card__body">
+                        <div class="row row--between">
+                            <a href="{{ path('app_site_show', {id: site.id}) }}" class="card__title">{{ site.name }}</a>
+                            {{ ui.tech_badge(site.effectiveTechnology) }}
+                        </div>
+                        <div class="muted text-sm mt-1">{{ site.url }}</div>
+                        <div class="row row--wrap mt-2 text-sm">
+                            <span>Version&nbsp;: <strong class="mono">{{ site.effectiveVersion ?? '—' }}</strong></span>
+                            {% if site.manualVersion %}<span class="badge badge--info" title="Détectée : {{ site.detectedVersion ?? 'inconnue' }}">📌 Manuelle</span>{% endif %}
+                            {% if site.updateAvailable %}<span class="badge badge--info">MAJ {{ site.latestKnownVersion }}</span>{% endif %}
+                        </div>
+                        <div class="muted text-sm mt-1">
+                            {{ site.lastScannedAt ? 'Scanné le ' ~ site.lastScannedAt|date('d/m/Y H:i') : 'Jamais scanné' }}
+                        </div>
+                    </div>
+                    <div class="card__footer row row--between">
+                        <a href="{{ path('app_site_show', {id: site.id}) }}" class="btn btn--ghost btn--sm">Détails →</a>
+                        {{ site.alerts|filter(a => not a.resolved)|length }} alerte(s)
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

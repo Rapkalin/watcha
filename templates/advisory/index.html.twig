@@ -1,0 +1,64 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as ui %}
+
+{% block title %}Vulnérabilités — Watcha{% endblock %}
+{% block heading %}Vulnérabilités{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <div>
+            <h1>Base de vulnérabilités</h1>
+            <p>Advisories importées (OSV.dev, WPScan) pour Symfony, Laravel, Drupal et WordPress.</p>
+        </div>
+        <div class="row row--wrap">
+            <form method="get" class="row">
+                <select name="technology" data-autosubmit>
+                    <option value="">Toutes les technologies</option>
+                    {% for tech in technologies %}
+                        <option value="{{ tech.value }}" {{ current_technology == tech ? 'selected' }}>{{ tech.label }}</option>
+                    {% endfor %}
+                </select>
+                <noscript><button class="btn btn--secondary" type="submit">Filtrer</button></noscript>
+            </form>
+
+            {% if is_granted(constant('App\\Entity\\User::ROLE_MAINTAINER')) %}
+                <form method="post" action="{{ path('app_advisory_sync') }}" class="inline-form">
+                    <input type="hidden" name="_token" value="{{ csrf_token('advisory_sync') }}">
+                    <input type="hidden" name="technology" value="{{ current_technology ? current_technology.value : '' }}">
+                    <button class="btn" type="submit">
+                        🔄 Synchroniser {{ current_technology ? current_technology.label : 'tout' }}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if advisories is empty %}
+        <div class="card"><div class="empty-state">
+            Aucune advisory en base.<br>
+            <span class="text-sm">Lancez <code class="mono">php bin/console app:cve:sync</code> pour importer les données.</span>
+        </div></div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Identifiant</th><th>Techno</th><th>Sévérité</th><th>Titre</th><th>Versions affectées</th><th>Corrigé</th><th>Publié</th></tr></thead>
+                <tbody>
+                {% for advisory in advisories %}
+                    <tr>
+                        <td class="mono text-sm">
+                            {% if advisory.referenceUrl %}<a href="{{ advisory.referenceUrl }}" target="_blank" rel="noopener" style="text-decoration:underline">{{ advisory.cveId ?? advisory.externalId }}</a>
+                            {% else %}{{ advisory.cveId ?? advisory.externalId }}{% endif %}
+                        </td>
+                        <td>{{ ui.tech_badge(advisory.technology) }}</td>
+                        <td>{{ ui.severity_badge(advisory.severity) }}</td>
+                        <td>{{ advisory.title }}</td>
+                        <td class="mono text-sm muted">{{ advisory.affectedConstraint ?? '—' }}</td>
+                        <td class="mono text-sm">{{ advisory.fixedVersion ?? '—' }}</td>
+                        <td class="muted text-sm">{{ advisory.publishedAt ? advisory.publishedAt|date('d/m/Y') : '—' }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un compte — Watcha{% endblock %}
+
+{% block layout %}
+    <div class="auth">
+        <div class="auth__card">
+            <div class="auth__brand"><span class="sidebar__logo">🛡️</span> Watcha</div>
+
+            <div class="card">
+                <div class="card__header">
+                    <div class="card__title">Créer un compte</div>
+                    <div class="card__desc">Votre compte devra être validé par un administrateur avant la première connexion.</div>
+                </div>
+                <div class="card__body">
+                    {{ form_start(registrationForm, {attr: {class: 'form'}}) }}
+                        <div class="form-row">
+                            {{ form_label(registrationForm.email) }}
+                            {{ form_widget(registrationForm.email) }}
+                            {{ form_errors(registrationForm.email) }}
+                        </div>
+                        <div class="form-row">
+                            {{ form_label(registrationForm.displayName) }}
+                            {{ form_widget(registrationForm.displayName) }}
+                            {{ form_errors(registrationForm.displayName) }}
+                        </div>
+                        <div class="form-row">
+                            {{ form_label(registrationForm.plainPassword.first) }}
+                            {{ form_widget(registrationForm.plainPassword.first) }}
+                            {{ form_errors(registrationForm.plainPassword.first) }}
+                        </div>
+                        <div class="form-row">
+                            {{ form_label(registrationForm.plainPassword.second) }}
+                            {{ form_widget(registrationForm.plainPassword.second) }}
+                            {{ form_errors(registrationForm.plainPassword.second) }}
+                        </div>
+                        <button class="btn btn--block" type="submit">Créer le compte</button>
+                    {{ form_end(registrationForm) }}
+                </div>
+                <div class="card__footer text-sm muted">
+                    Déjà inscrit ? <a href="{{ path('app_login') }}" style="text-decoration:underline">Se connecter</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

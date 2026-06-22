@@ -1,0 +1,42 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Éditer {{ site.name }} — Watcha{% endblock %}
+{% block heading %}Éditer {{ site.name }}{% endblock %}
+
+{% block content %}
+    <div class="page-header"><div>
+        <h1>Technologie & version</h1>
+        <p>Corrigez manuellement la technologie ou la version — utile quand elle n'est pas exposée
+           publiquement (Symfony, Laravel). Une version saisie est <strong>épinglée</strong> et ne sera plus
+           écrasée par les scans.</p>
+    </div></div>
+
+    <div class="card" style="max-width:560px">
+        <div class="card__body">
+            {{ form_start(form, {attr: {class: 'form'}}) }}
+                {% if site.technology or site.detectedVersion %}
+                    <div class="alert alert--info"><span>
+                        Détection automatique : <strong>{{ site.technology ? site.technology.label : 'technologie inconnue' }}
+                        {{ site.detectedVersion ?? '(version non exposée)' }}</strong>.
+                        Les valeurs saisies ci-dessous prennent le dessus pour le calcul des CVE.
+                    </span></div>
+                {% endif %}
+                <div class="form-row">
+                    {{ form_label(form.manualTechnology) }}
+                    {{ form_widget(form.manualTechnology) }}
+                    {{ form_errors(form.manualTechnology) }}
+                </div>
+                <div class="form-row">
+                    {{ form_label(form.manualVersion) }}
+                    {{ form_widget(form.manualVersion) }}
+                    {% if form.manualVersion.vars.help %}<span class="help">{{ form.manualVersion.vars.help }}</span>{% endif %}
+                    {{ form_errors(form.manualVersion) }}
+                </div>
+                <div class="row">
+                    <button class="btn" type="submit">Enregistrer</button>
+                    <a href="{{ path('app_site_show', {id: site.id}) }}" class="btn btn--outline">Annuler</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

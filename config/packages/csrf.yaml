@@ -1,0 +1,8 @@
+# Session-backed (stateful) CSRF protection. Works with server-rendered tokens and requires no
+# client-side JavaScript — appropriate for this session-authenticated dashboard.
+framework:
+    csrf_protection:
+        enabled: true
+    form:
+        csrf_protection:
+            enabled: true

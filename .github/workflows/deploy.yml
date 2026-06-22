@@ -1,0 +1,63 @@
+# =============================================================================
+# Reusable deploy workflow — SSH + rsync to a 1&1 server.
+# The deploy logic lives in the versioned script infra/deploy/release.sh (in-place
+# deploy with a hardlink rollback snapshot), so it can be read, reviewed and run by hand.
+#
+# Server layout (one directory per environment) — see infra/deploy/release.sh:
+#   ~/<deploy_dir>/website/      <- live app (docroot must point to website/public)
+#   ~/<deploy_dir>/shared/.env   <- prod secrets, symlinked into website/.env (never rsynced)
+#   ~/<deploy_dir>/old_website/  <- previous deploy (hardlink snapshot) for rollback
+#
+# Called by ci.yml. Requires (Settings → Secrets and variables → Actions):
+#   Variables: DEPLOY_HOST, DEPLOY_USER, DEPLOY_PORT (default 22), DEPLOY_PHP_BIN (default /usr/bin/php8.3-cli)
+#   Secrets:   SSH_PRIVATE_KEY, SSH_KNOWN_HOSTS
+# =============================================================================
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub environment name (integration/recette/preprod/production)
+        required: true
+        type: string
+      deploy_dir:
+        description: Target directory on the server (under the SSH user's home)
+        required: true
+        type: string
+      artifact:
+        description: Build artifact to download (prod vendor/ + compiled assets)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download production build
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact }}
+
+      - name: Deploy (in-place rsync + rollback snapshot, see infra/deploy/release.sh)
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          DEPLOY_DIR: ${{ inputs.deploy_dir }}
+          DEPLOY_PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || '/usr/bin/php8.3-cli' }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          printf '%s\n' "$SSH_PRIVATE_KEY" | ssh-add -
+          bash infra/deploy/release.sh

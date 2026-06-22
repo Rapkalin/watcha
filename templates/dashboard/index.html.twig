@@ -1,0 +1,72 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as ui %}
+
+{% block title %}Tableau de bord — Watcha{% endblock %}
+{% block heading %}Tableau de bord{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <div>
+            <h1>Bonjour {{ app.user.displayName ?: app.user.userIdentifier }} 👋</h1>
+            <p>Vue d'ensemble de la sécurité de vos sites surveillés.</p>
+        </div>
+        <a href="{{ path('app_site_new') }}" class="btn">+ Ajouter un site</a>
+    </div>
+
+    <div class="grid grid--stats">
+        <div class="card"><div class="card__body">
+            <div class="stat__label">Sites surveillés</div>
+            <div class="stat__value">{{ sites|length }}</div>
+        </div></div>
+        <div class="card"><div class="card__body">
+            <div class="stat__label">Alertes ouvertes</div>
+            <div class="stat__value">{{ alerts|length }}</div>
+            <div class="stat__hint">CVE + mises à jour à traiter</div>
+        </div></div>
+        <div class="card"><div class="card__body">
+            <div class="stat__label">Advisories en base</div>
+            <div class="stat__value">{{ advisory_count }}</div>
+        </div></div>
+        {% if pending_users is not null %}
+            <div class="card"><div class="card__body">
+                <div class="stat__label">Comptes à valider</div>
+                <div class="stat__value">{{ pending_users }}</div>
+                <div class="stat__hint"><a href="{{ path('app_admin_user_index') }}" style="text-decoration:underline">Gérer</a></div>
+            </div></div>
+        {% endif %}
+    </div>
+
+    <div class="card mt-3" id="alertes">
+        <div class="card__header">
+            <div class="card__title">Alertes ouvertes</div>
+            <div class="card__desc">Vulnérabilités déclarées et mises à jour disponibles pour vos sites.</div>
+        </div>
+        <div class="card__body" style="padding-top:0">
+            {% if alerts is empty %}
+                <div class="empty-state">✅ Aucune alerte ouverte. Tout est à jour !</div>
+            {% else %}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>Site</th><th>Type</th><th>Sévérité</th><th>Détail</th><th>Depuis</th></tr></thead>
+                        <tbody>
+                        {% for alert in alerts %}
+                            <tr>
+                                <td><a href="{{ path('app_site_show', {id: alert.site.id}) }}" style="font-weight:500">{{ alert.site.name }}</a></td>
+                                <td>{{ ui.alert_type_badge(alert.type) }}</td>
+                                <td>{{ ui.severity_badge(alert.severity) }}</td>
+                                <td>
+                                    {{ alert.message }}
+                                    {% if alert.advisory and alert.advisory.referenceUrl %}
+                                        — <a href="{{ alert.advisory.referenceUrl }}" target="_blank" rel="noopener" style="text-decoration:underline">référence</a>
+                                    {% endif %}
+                                </td>
+                                <td class="muted">{{ alert.createdAt|date('d/m/Y') }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

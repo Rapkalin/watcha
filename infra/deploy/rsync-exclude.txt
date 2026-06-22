@@ -1,0 +1,45 @@
+# Files excluded from the runtime artifact pushed to the server.
+# Everything here is needed to BUILD or develop the app, never to RUN it.
+# Patterns with a leading "/" are anchored to the project root.
+
+# VCS / CI / editor
+/.git/
+/.github/
+/.gitignore
+/.gitattributes
+/.gitleaks.toml
+/.idea/
+/.vscode/
+
+# composer.json IS shipped on purpose: at runtime Symfony's Kernel::getProjectDir()
+# walks up to a composer.json to locate the project root. Without it the wrong
+# config/bundles.php could load. Do NOT re-exclude composer.json.
+# composer.lock + symfony.lock are only read at build/install time, never at runtime.
+/composer.lock
+/symfony.lock
+
+# Static analysis / coding standards / tests tooling
+/.php-cs-fixer.dist.php
+/.php-cs-fixer.cache
+/phpstan.dist.neon
+/phpunit.dist.xml
+/.phpunit.cache/
+/tests/
+
+# Local/dev environment files — the real .env is symlinked from shared/
+/.env
+/.env.*
+
+# Docker / Compose / Make / docs — build & local-dev only
+/docker/
+/compose.yaml
+/Makefile
+/README.md
+/CHANGELOG.md
+/docs/
+
+# Infra (this deploy tooling) — not part of the app
+/infra/
+
+# Build/runtime scratch — regenerated per release on the server
+/var/

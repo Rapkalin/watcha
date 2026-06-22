@@ -1,0 +1,19 @@
+# Gitleaks configuration for Watcha.
+# Extends the bundled default ruleset and allowlists known non-secret placeholders.
+title = "Watcha gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Placeholders and committed dev defaults that are not real secrets."
+paths = [
+  '''composer\.lock''',
+  '''symfony\.lock''',
+]
+regexes = [
+  # Dummy values committed on purpose in .env.example / .env.test.
+  '''change_me_in_env_local_for_each_environment''',
+  '''\$ecretf0rt3st''',
+  '''mysql://app:app@''',
+]

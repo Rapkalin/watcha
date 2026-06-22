@@ -1,0 +1,84 @@
+{% extends 'layout.html.twig' %}
+{% import '_macros.html.twig' as ui %}
+
+{% block title %}{{ site.name }} — Watcha{% endblock %}
+{% block heading %}{{ site.name }}{% endblock %}
+
+{% block content %}
+    {% set open_alerts = site.alerts|filter(a => not a.resolved) %}
+
+    <div class="page-header">
+        <div>
+            <h1 class="row">{{ site.name }} {{ ui.tech_badge(site.effectiveTechnology) }}</h1>
+            <p><a href="{{ site.url }}" target="_blank" rel="noopener" style="text-decoration:underline">{{ site.url }}</a></p>
+        </div>
+        <div class="row">
+            <a href="{{ path('app_site_edit', {id: site.id}) }}" class="btn btn--secondary">✏️ Version</a>
+            <form method="post" action="{{ path('app_site_scan', {id: site.id}) }}" class="inline-form">
+                <input type="hidden" name="_token" value="{{ csrf_token('scan' ~ site.id) }}">
+                <button class="btn btn--secondary" type="submit">🔄 Re-scanner</button>
+            </form>
+            <form method="post" action="{{ path('app_site_delete', {id: site.id}) }}" class="inline-form"
+                  onsubmit="return confirm('Supprimer ce site et ses alertes ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ site.id) }}">
+                <button class="btn btn--outline" type="submit">Supprimer</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid grid--stats">
+        <div class="card"><div class="card__body">
+            {% if site.manualVersion %}
+                {# Both values shown when a manual override exists #}
+                <div class="stat__label">Version</div>
+                <div class="stat__value mono" style="font-size:1.4rem">{{ site.manualVersion }} <span class="badge badge--info">📌 Manuelle</span></div>
+                <div class="stat__hint">Détectée automatiquement : <span class="mono">{{ site.detectedVersion ?? 'inconnue' }}</span></div>
+            {% else %}
+                <div class="stat__label">Version détectée</div>
+                <div class="stat__value mono" style="font-size:1.4rem">{{ site.detectedVersion ?? '—' }}</div>
+            {% endif %}
+        </div></div>
+        <div class="card"><div class="card__body">
+            <div class="stat__label">Dernière version stable</div>
+            <div class="stat__value mono" style="font-size:1.4rem">{{ site.latestKnownVersion ?? '—' }}</div>
+            {% if site.updateAvailable %}<div class="stat__hint"><span class="badge badge--info">Mise à jour disponible</span></div>{% endif %}
+        </div></div>
+        <div class="card"><div class="card__body">
+            <div class="stat__label">Alertes ouvertes</div>
+            <div class="stat__value">{{ open_alerts|length }}</div>
+        </div></div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card__header"><div class="card__title">Dernier scan</div></div>
+        <div class="card__body" style="padding-top:0">
+            <p class="text-sm">{{ site.lastScanMessage ?? 'Aucun scan effectué.' }}</p>
+            <p class="muted text-sm mt-1">{{ site.lastScannedAt ? site.lastScannedAt|date('d/m/Y H:i') : '' }}</p>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card__header"><div class="card__title">Alertes</div></div>
+        <div class="card__body" style="padding-top:0">
+            {% if open_alerts is empty %}
+                <div class="empty-state">✅ Aucune alerte ouverte pour ce site.</div>
+            {% else %}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>Type</th><th>Sévérité</th><th>Détail</th><th>Référence</th></tr></thead>
+                        <tbody>
+                        {% for alert in open_alerts %}
+                            <tr>
+                                <td>{{ ui.alert_type_badge(alert.type) }}</td>
+                                <td>{{ ui.severity_badge(alert.severity) }}</td>
+                                <td>{{ alert.message }}</td>
+                                <td>{% if alert.advisory and alert.advisory.referenceUrl %}<a href="{{ alert.advisory.referenceUrl }}" target="_blank" rel="noopener" style="text-decoration:underline">Voir</a>{% else %}—{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

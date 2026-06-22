@@ -1,0 +1,109 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Utilisateurs — Watcha{% endblock %}
+{% block heading %}Utilisateurs{% endblock %}
+
+{% set is_admin = is_granted(constant('App\\Entity\\User::ROLE_ADMIN')) %}
+
+{% macro role_badge(user) %}
+    {% set r = user.highestRole %}
+    {% if r == constant('App\\Entity\\User::ROLE_ADMIN') %}<span class="badge badge--high">Admin</span>
+    {% elseif r == constant('App\\Entity\\User::ROLE_MAINTAINER') %}<span class="badge badge--info">Maintainer</span>
+    {% else %}<span class="badge">Basic</span>{% endif %}
+{% endmacro %}
+{% import _self as u %}
+
+{% block content %}
+    <div class="page-header">
+        <div>
+            <h1>Gestion des utilisateurs</h1>
+            <p>
+                {% if is_admin %}Vous pouvez approuver, changer les rôles et supprimer des comptes.
+                {% else %}Vous pouvez consulter la liste et approuver les nouveaux comptes.{% endif %}
+            </p>
+        </div>
+    </div>
+
+    {% if pending is not empty %}
+        <div class="card mt-2">
+            <div class="card__header">
+                <div class="card__title">Comptes en attente de validation ({{ pending|length }})</div>
+                <div class="card__desc">Ces utilisateurs ne peuvent pas se connecter tant qu'ils ne sont pas approuvés.</div>
+            </div>
+            <div class="card__body" style="padding-top:0">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>E-mail</th><th>Nom</th><th>Demandé le</th><th></th></tr></thead>
+                        <tbody>
+                        {% for user in pending %}
+                            <tr>
+                                <td>{{ user.email }}</td>
+                                <td class="muted">{{ user.displayName ?? '—' }}</td>
+                                <td class="muted">{{ user.createdAt|date('d/m/Y H:i') }}</td>
+                                <td style="text-align:right">
+                                    <form method="post" action="{{ path('app_admin_user_approve', {id: user.id}) }}" class="inline-form">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('approve' ~ user.id) }}">
+                                        <button class="btn btn--sm" type="submit">Approuver</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card mt-3">
+        <div class="card__header"><div class="card__title">Tous les utilisateurs ({{ users|length }})</div></div>
+        <div class="card__body" style="padding-top:0">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr><th>E-mail</th><th>Nom</th><th>Rôle</th><th>Statut</th>{% if is_admin %}<th>Actions</th>{% endif %}</tr></thead>
+                    <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.email }}{% if user == app.user %} <span class="muted text-sm">(vous)</span>{% endif %}</td>
+                            <td class="muted">{{ user.displayName ?? '—' }}</td>
+                            <td>{{ u.role_badge(user) }}</td>
+                            <td>
+                                {% if user.approved %}<span class="badge badge--low">Approuvé</span>
+                                {% else %}<span class="badge badge--medium">En attente</span>{% endif %}
+                            </td>
+                            {% if is_admin %}
+                                <td>
+                                    <div class="row row--wrap">
+                                        <form method="post" action="{{ path('app_admin_user_role', {id: user.id}) }}" class="row" style="gap:.35rem">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('role' ~ user.id) }}">
+                                            <select name="role" style="height:1.85rem;width:auto;font-size:.78rem">
+                                                {% for label, value in assignable_roles %}
+                                                    <option value="{{ value }}" {{ (user.highestRole == value) or (value == '' and user.highestRole == constant('App\\Entity\\User::ROLE_USER')) ? 'selected' }}>{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button class="btn btn--outline btn--sm" type="submit">Définir</button>
+                                        </form>
+                                        {% if user != app.user %}
+                                            {% if user.approved %}
+                                                <form method="post" action="{{ path('app_admin_user_revoke', {id: user.id}) }}" class="inline-form">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('revoke' ~ user.id) }}">
+                                                    <button class="btn btn--ghost btn--sm" type="submit">Révoquer</button>
+                                                </form>
+                                            {% endif %}
+                                            <form method="post" action="{{ path('app_admin_user_delete', {id: user.id}) }}" class="inline-form"
+                                                  onsubmit="return confirm('Supprimer ce compte ?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                                                <button class="btn btn--destructive btn--sm" type="submit">Supprimer</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

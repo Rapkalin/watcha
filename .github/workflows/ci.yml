@@ -1,0 +1,244 @@
+# =============================================================================
+# CI/CD — Watcha (Symfony 7.4, PHP 8.3, MySQL 8)
+#
+# Pipeline:
+#   quality          → cs-fixer, phpstan, lint, composer audit (CVE check)
+#   test             → PHPUnit against a MySQL 8 service
+#   secret-detection → gitleaks
+#   build            → production Composer install + compiled assets (artifact)
+#   deploy           → SSH + rsync per environment (reusable deploy.yml)
+#
+# Scheduled CVE check: the `cve-audit` job also runs daily (cron) so newly
+# published advisories against the locked dependencies fail the pipeline even
+# without a push. Build/deploy are skipped on scheduled runs.
+#
+# Deploy requires these repository settings (Settings → Secrets and variables):
+#   Variables: DEPLOY_HOST, DEPLOY_USER, DEPLOY_PORT (optional, default 22)
+#   Secrets:   SSH_PRIVATE_KEY, SSH_KNOWN_HOSTS
+#   Environments: integration, recette, preprod, production
+#                 (add required reviewers on "production" for manual approval)
+# Deploy jobs are inert until DEPLOY_HOST is set.
+# =============================================================================
+name: CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['[0-9]+.[0-9]+.[0-9]+']
+  pull_request:
+  schedule:
+    - cron: '0 6 * * *' # daily CVE check (06:00 UTC)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.3'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # QUALITY
+  # ---------------------------------------------------------------------------
+  cs-fixer:
+    name: Coding standards (php-cs-fixer)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql
+          tools: composer:v2
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - run: composer cs-check
+
+  phpstan:
+    name: Static analysis (PHPStan)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: dev
+      APP_SECRET: ci_secret_not_used
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql
+          tools: composer:v2
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - run: php bin/console cache:warmup --env=dev
+      - run: composer phpstan
+
+  lint:
+    name: Lint (container, twig, yaml)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      APP_SECRET: ci_secret_not_used
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql
+          tools: composer:v2
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - run: php bin/console lint:container
+      - run: php bin/console lint:twig templates
+      - run: php bin/console lint:yaml config --parse-tags
+
+  cve-audit:
+    name: CVE check (composer audit)
+    # Runs on every push/PR and on the daily schedule.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql
+          tools: composer:v2
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - run: composer audit --locked
+
+  # ---------------------------------------------------------------------------
+  # TEST
+  # ---------------------------------------------------------------------------
+  tests:
+    name: PHPUnit
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: watcha
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      APP_ENV: test
+      APP_SECRET: ci_secret_not_used
+      # root lets Doctrine create the "_test"-suffixed database (see when@test in doctrine.yaml).
+      DATABASE_URL: "mysql://root:root@127.0.0.1:3306/watcha?serverVersion=8.0&charset=utf8mb4"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql
+          tools: composer:v2
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - run: php bin/console doctrine:database:create --if-not-exists --env=test
+      - run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+      - run: php bin/phpunit --colors=never
+
+  # ---------------------------------------------------------------------------
+  # SECRET DETECTION
+  # ---------------------------------------------------------------------------
+  secret-detection:
+    name: Secret detection (gitleaks)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so gitleaks scans every commit
+      - name: Install gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz \
+            | tar -xz -C /usr/local/bin gitleaks
+      - run: gitleaks detect --source . --config .gitleaks.toml --redact --no-banner --exit-code 1
+
+  # ---------------------------------------------------------------------------
+  # BUILD — production artifact (only when a deploy can follow)
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build production artifact
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/'))
+    needs: [cs-fixer, phpstan, lint, cve-audit, tests, secret-detection]
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: prod
+      APP_SECRET: build_placeholder_overridden_on_server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql
+          tools: composer:v2
+          coverage: none
+      - name: Install production dependencies
+        run: composer install --no-dev --optimize-autoloader --classmap-authoritative --no-interaction --no-scripts
+      - name: Compile assets
+        run: |
+          php bin/console sass:build
+          php bin/console asset-map:compile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ github.sha }}
+          path: |
+            vendor/
+            public/assets/
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # DEPLOY — SSH + rsync (reusable deploy.yml). Inert until DEPLOY_HOST is set.
+  # ---------------------------------------------------------------------------
+  deploy-integration:
+    needs: build
+    if: github.ref == 'refs/heads/develop' && vars.DEPLOY_HOST != ''
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: integration
+      deploy_dir: integration-watcha
+      artifact: build-${{ github.sha }}
+    secrets: inherit
+
+  deploy-recette:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') && vars.DEPLOY_HOST != ''
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: recette
+      deploy_dir: recette-watcha
+      artifact: build-${{ github.sha }}
+    secrets: inherit
+
+  deploy-preprod:
+    needs: build
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_HOST != ''
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: preprod
+      deploy_dir: preprod-watcha
+      artifact: build-${{ github.sha }}
+    secrets: inherit
+
+  deploy-production:
+    needs: build
+    # The "production" GitHub Environment should require a reviewer → manual approval.
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_HOST != ''
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+      deploy_dir: prod-watcha
+      artifact: build-${{ github.sha }}
+    secrets: inherit
