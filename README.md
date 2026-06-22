@@ -154,9 +154,9 @@ MySQL 8) → **secret-detection** (gitleaks) → **build** (install prod + asset
 
 - Le job `cve-audit` tourne aussi **chaque jour** (cron `0 6 * * *`) pour échouer dès qu'une nouvelle
   CVE touche les dépendances verrouillées ; build/deploy sont ignorés sur les runs planifiés.
-- **Déploiement** (inerte tant que `DEPLOY_HOST` n'est pas défini) — un environnement par cible :
-  `integration` (push `develop`), `recette` (tag `X.Y.Z`), `preprod` (push `main`), `production`
-  (`main`, **approbation manuelle** via les *required reviewers* de l'environnement GitHub).
+- **Déploiement** (inerte tant que `DEPLOY_HOST` n'est pas défini) — deux environnements :
+  `preprod` (push sur `main`) et `production` (push d'un tag `X.Y.Z`, **approbation manuelle** via
+  les *required reviewers* de l'environnement GitHub).
   Déploiement « in-place » dans `~/<env>-watcha/website/` (docroot = `website/public`), avec
   un `shared/.env` persistant et un snapshot **`old_website/`** (hardlinks) avant chaque déploiement
   pour le **rollback** (`rm -rf website && cp -al old_website website`). Voir
@@ -164,8 +164,7 @@ MySQL 8) → **secret-detection** (gitleaks) → **build** (install prod + asset
 - À configurer (Settings → Secrets and variables → Actions) :
   - Variables : `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PORT` (défaut 22), `DEPLOY_PHP_BIN` (défaut `/usr/bin/php8.3-cli`)
   - Secrets : `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS`
-  - Environnements : `integration`, `recette`, `preprod`, `production` (ajouter un reviewer sur
-    `production` pour l'étape manuelle)
+  - Environnements : `preprod`, `production` (ajouter un reviewer sur `production` pour l'étape manuelle)
 
 ## Déploiement sur 1&1
 

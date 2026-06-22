@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions pipeline (`.github/workflows/ci.yml` + reusable `deploy.yml`) modeled after the
   pipeline: quality (cs-fixer, phpstan, lint, `composer audit`), test (PHPUnit + MySQL 8),
   secret detection (gitleaks), build (production artifact), and SSH+rsync deployment by environment
-  (integration/acceptance/pre-production/production; production requires manual approval). “In-place”
+  (preprod on `main` push, production on tag push with manual approval). “In-place”
   deployment via the versioned script `infra/deploy/release.sh` (app in `website/`, secrets in
   `shared/.env`, `old_website/` snapshot as hard links for rollback). Daily CVE check (cron).
 - Scripts Composer `cs-check`, `cs-fix`, `phpstan`.

@@ -18,7 +18,7 @@ on:
   workflow_call:
     inputs:
       environment:
-        description: GitHub environment name (integration/recette/preprod/production)
+        description: GitHub environment name (preprod/production)
         required: true
         type: string
       deploy_dir:
