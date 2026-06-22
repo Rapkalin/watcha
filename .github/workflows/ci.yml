@@ -55,7 +55,10 @@ jobs:
           extensions: intl, pdo_mysql
           tools: composer:v2
           coverage: none
+      - run: cp .env.example .env
       - uses: ramsey/composer-install@v3
+        with:
+          composer-options: "--no-scripts"
       - run: composer cs-check
 
   phpstan:
@@ -73,7 +76,10 @@ jobs:
           extensions: intl, pdo_mysql
           tools: composer:v2
           coverage: none
+      - run: cp .env.example .env
       - uses: ramsey/composer-install@v3
+        with:
+          composer-options: "--no-scripts"
       - run: php bin/console cache:warmup --env=dev
       - run: composer phpstan
 
@@ -91,7 +97,10 @@ jobs:
           extensions: intl, pdo_mysql
           tools: composer:v2
           coverage: none
+      - run: cp .env.example .env
       - uses: ramsey/composer-install@v3
+        with:
+          composer-options: "--no-scripts"
       - run: php bin/console lint:container
       - run: php bin/console lint:twig templates
       - run: php bin/console lint:yaml config --parse-tags
@@ -108,7 +117,10 @@ jobs:
           extensions: intl, pdo_mysql
           tools: composer:v2
           coverage: none
+      - run: cp .env.example .env
       - uses: ramsey/composer-install@v3
+        with:
+          composer-options: "--no-scripts"
       - run: composer audit --locked
 
   # ---------------------------------------------------------------------------
@@ -142,7 +154,10 @@ jobs:
           extensions: intl, pdo_mysql
           tools: composer:v2
           coverage: none
+      - run: cp .env.example .env
       - uses: ramsey/composer-install@v3
+        with:
+          composer-options: "--no-scripts"
       - run: php bin/console doctrine:database:create --if-not-exists --env=test
       - run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
       - run: php bin/phpunit --colors=never
@@ -185,6 +200,7 @@ jobs:
           extensions: intl, pdo_mysql
           tools: composer:v2
           coverage: none
+      - run: cp .env.example .env
       - name: Install production dependencies
         run: composer install --no-dev --optimize-autoloader --classmap-authoritative --no-interaction --no-scripts
       - name: Compile assets
