@@ -160,6 +160,8 @@ jobs:
           composer-options: "--no-scripts"
       - run: php bin/console doctrine:database:create --if-not-exists --env=test
       - run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+      # Functional tests render templates that include the compiled SCSS asset, so build it first.
+      - run: php bin/console sass:build
       - run: php bin/phpunit --colors=never
 
   # ---------------------------------------------------------------------------
