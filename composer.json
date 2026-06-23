@@ -5,7 +5,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "composer/semver": "^3.4.4",
@@ -45,7 +45,7 @@
         "bump-after-update": true,
         "sort-packages": true,
         "platform": {
-            "php": "8.3.14"
+            "php": "8.4"
         }
     },
     "autoload": {

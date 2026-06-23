@@ -71,6 +71,15 @@ cd "\$BASE/website"
 ln -sfn "\$BASE/shared/.env" .env
 mkdir -p var && rm -rf var/log && ln -sfn "\$BASE/shared/var/log" var/log
 
+# Fail fast (with a clear message) if shared/.env is not production-configured. Otherwise the
+# kernel boots in dev and tries to load dev-only bundles (e.g. MakerBundle) that --no-dev omits.
+if [ ! -f .env ]; then
+  echo "✖ \$BASE/shared/.env is missing — create it (APP_ENV=prod, APP_SECRET, DATABASE_URL, ...)"; exit 1;
+fi
+if ! grep -qE '^[[:space:]]*APP_ENV[[:space:]]*=[[:space:]]*prod' .env; then
+  echo "✖ \$BASE/shared/.env must define APP_ENV=prod"; exit 1;
+fi
+
 # Per-env HTTP Basic auth: appended to public/.htaccess only if shared/.htpasswd
 # exists. public/.htaccess is rsynced fresh each deploy, so no duplication.
 if [ -f "\$BASE/shared/.htpasswd" ]; then
