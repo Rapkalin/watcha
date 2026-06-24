@@ -5,7 +5,41 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [INIT] Project init (MVP)
+## [1.1.0] — 2026-06-24
+
+### Added
+- Transactional e-mails (Symfony Mailer): a central `App\Service\Mail\Mailer` that logs transport
+  failures instead of breaking the triggering action, a shared e-mail layout
+  (`templates/emails/`), and a configurable default sender via `MAILER_FROM`. E-mails sent:
+  e-mail address verification on sign-up, "account pending approval" to maintainers/admins,
+  "account approved" to the user, and a per-owner digest of new CVE/update alerts.
+- E-mail address verification on registration via `symfonycasts/verify-email-bundle` (signed,
+  expiring links; `User.emailVerified`), with the verification route `/register/verify`.
+- Idempotent `app:admin:bootstrap` console command that creates the default admin from
+  `ADMIN_EMAIL`/`ADMIN_PASSWORD` only when no approved admin exists. Wired into the deploy script
+  (after migrations) and `make fixtures-admin`, so admin creation uses the same mechanism
+  everywhere.
+- Bot/spam protection on the authentication forms: login throttling (`login_throttling`), a
+  honeypot field on the registration form, and per-IP rate limiting of sign-ups
+  (`config/packages/rate_limiter.yaml`).
+- Per-owner e-mail digest of new alerts, sent at the end of `app:sites:scan` (batch only, never
+  during a web request). `SiteAlert.notifiedAt` tracks delivery and a reopened alert is notified
+  again.
+
+### Changed
+- Login is gated by admin approval only; e-mail verification is informational and no longer blocks
+  login. An admin can approve an account whose e-mail is not yet verified, and the admin user list
+  shows each account's e-mail verification status.
+- Maintainers/admins are notified of a new account at registration time (the e-mail states whether
+  the address has been confirmed).
+- `make fixtures-admin` now uses `app:admin:bootstrap` (driven by `ADMIN_EMAIL`/`ADMIN_PASSWORD`)
+  instead of hard-coded credentials.
+
+### Fixed
+- Development Docker PHP image upgraded from PHP 8.3 to 8.4 to match the project's `>=8.4`
+  requirement (the application failed to boot in the container otherwise).
+
+## [1.0.0] Project init (MVP) — 2026-06-22
 
 ### Added
 - GitHub Actions pipeline (`.github/workflows/ci.yml` + reusable `deploy.yml`) modeled after the
@@ -38,4 +72,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker development stack, GitHub Actions CI/CD (quality, tests, security, secret scanning,
   build, deploy) and 1&1 deployment guide.
 
-[INIT]: https://github.com/Rapkalin/watcha/commits/main
+[1.1.0]: https://github.com/Rapkalin/watcha/releases/tag/1.1.0
+[1.0.0]: https://github.com/Rapkalin/watcha/releases/tag/1.0.0
