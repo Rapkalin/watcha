@@ -1,0 +1,39 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block subject %}{{ alertCount }} alerte(s) sur vos sites{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px;">Bonjour{% if displayName %} {{ displayName }}{% endif %},</p>
+    <p style="margin:0 0 20px;">
+        La dernière analyse a relevé <strong>{{ alertCount }}</strong> nouvelle(s) alerte(s)
+        sur vos sites surveillés :
+    </p>
+
+    {% for group in groups %}
+        <div style="margin:0 0 18px;border:1px solid #e4e7eb;border-radius:8px;overflow:hidden;">
+            <div style="padding:10px 14px;background:#f9fafb;border-bottom:1px solid #e4e7eb;font-weight:600;">
+                {{ group.site.name }}
+                <span style="font-weight:400;color:#6b7280;font-size:13px;">— {{ group.site.url }}</span>
+            </div>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                {% for alert in group.alerts %}
+                    <tr>
+                        <td style="padding:10px 14px;border-bottom:1px solid #f0f1f3;font-size:14px;line-height:1.5;vertical-align:top;">
+                            {% set sev = alert.severity.value %}
+                            {% set color = sev == 'critical' ? '#b91c1c' : (sev == 'high' ? '#c2410c' : (sev == 'medium' ? '#a16207' : '#4b5563')) %}
+                            <span style="display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;color:#ffffff;background:{{ color }};border-radius:4px;padding:2px 7px;margin-right:8px;">{{ alert.severity.label }}</span>
+                            <span style="color:#6b7280;font-size:12px;">{{ alert.type.label }}</span>
+                            <div style="margin-top:4px;">{{ alert.message }}</div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% endfor %}
+
+    <p style="margin:8px 0 0;">
+        <a href="{{ dashboardUrl }}" style="display:inline-block;padding:10px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">
+            Voir le tableau de bord
+        </a>
+    </p>
+{% endblock %}

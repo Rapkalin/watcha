@@ -35,8 +35,8 @@ db-create: ## Create the database
 migrate: ## Run database migrations
 	$(CONSOLE) doctrine:migrations:migrate --no-interaction
 
-fixtures-admin: ## Create the first admin (override with EMAIL=... PASSWORD=...)
-	$(CONSOLE) app:user:create --email=$(or $(EMAIL),admin@watcha.test) --password=$(or $(PASSWORD),AdminPassw0rd!) --role=admin
+fixtures-admin: ## Ensure the admin exists from ADMIN_EMAIL/ADMIN_PASSWORD (override with EMAIL=... PASSWORD=...)
+	$(CONSOLE) app:admin:bootstrap $(if $(EMAIL),--email=$(EMAIL)) $(if $(PASSWORD),--password=$(PASSWORD))
 
 sync: ## Fetch the latest CVEs/advisories from the providers
 	$(CONSOLE) app:cve:sync

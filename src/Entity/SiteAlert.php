@@ -56,6 +56,10 @@ class SiteAlert
     #[ORM\Column(nullable: true)]
     private ?DateTimeImmutable $resolvedAt = null;
 
+    /** When the owner was last e-mailed about this alert; null means not notified yet. */
+    #[ORM\Column(nullable: true)]
+    private ?DateTimeImmutable $notifiedAt = null;
+
     public function __construct(Site $site, AlertType $type, string $dedupKey)
     {
         $this->site = $site;
@@ -137,6 +141,20 @@ class SiteAlert
     {
         $this->resolved = false;
         $this->resolvedAt = null;
+        // A regression must be notified again.
+        $this->notifiedAt = null;
+
+        return $this;
+    }
+
+    public function getNotifiedAt(): ?DateTimeImmutable
+    {
+        return $this->notifiedAt;
+    }
+
+    public function markNotified(): static
+    {
+        $this->notifiedAt = new DateTimeImmutable();
 
         return $this;
     }

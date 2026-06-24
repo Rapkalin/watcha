@@ -48,6 +48,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $displayName = null;
 
     /**
+     * Whether the user has confirmed ownership of their e-mail via the verification link.
+     * A self-registered account must verify its e-mail before it can be approved/log in.
+     */
+    #[ORM\Column]
+    private bool $emailVerified = false;
+
+    #[ORM\Column(nullable: true)]
+    private ?DateTimeImmutable $emailVerifiedAt = null;
+
+    /**
      * A self-registered account must be approved by a maintainer/admin before login.
      */
     #[ORM\Column]
@@ -155,6 +165,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setDisplayName(?string $displayName): static
     {
         $this->displayName = $displayName;
+
+        return $this;
+    }
+
+    public function isEmailVerified(): bool
+    {
+        return $this->emailVerified;
+    }
+
+    public function getEmailVerifiedAt(): ?DateTimeImmutable
+    {
+        return $this->emailVerifiedAt;
+    }
+
+    public function verifyEmail(): static
+    {
+        $this->emailVerified = true;
+        $this->emailVerifiedAt = new DateTimeImmutable();
+
+        return $this;
+    }
+
+    /**
+     * Marks the e-mail as verified without registration (CLI-created/trusted accounts).
+     */
+    public function setEmailVerified(bool $emailVerified): static
+    {
+        $this->emailVerified = $emailVerified;
+        $this->emailVerifiedAt = $emailVerified ? ($this->emailVerifiedAt ?? new DateTimeImmutable()) : null;
 
         return $this;
     }

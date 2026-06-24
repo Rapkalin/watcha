@@ -44,6 +44,25 @@ class SiteAlertRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Open alerts that have never been notified, across all owners. Used by the scan to send
+     * digests; the site is eager-loaded to group by owner without extra queries.
+     *
+     * @return SiteAlert[]
+     */
+    public function findUnnotifiedOpen(): array
+    {
+        return $this->createQueryBuilder('a')
+            ->innerJoin('a.site', 's')
+            ->addSelect('s')
+            ->andWhere('a.resolved = false')
+            ->andWhere('a.notifiedAt IS NULL')
+            ->orderBy('s.owner', 'ASC')
+            ->addOrderBy('a.severity', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countOpenForOwner(User $owner): int
     {
         return (int) $this->createQueryBuilder('a')

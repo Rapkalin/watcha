@@ -29,6 +29,14 @@ final class RegistrationFormType extends AbstractType
                 'label' => 'Nom affiché',
                 'required' => false,
             ])
+            // Honeypot: invisible to humans (hidden in the template), tempting for bots. Any
+            // submitted value means a bot filled it — the controller rejects such submissions.
+            ->add('website', TextType::class, [
+                'mapped' => false,
+                'required' => false,
+                'label' => false,
+                'attr' => ['autocomplete' => 'off', 'tabindex' => '-1'],
+            ])
             ->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'mapped' => false,

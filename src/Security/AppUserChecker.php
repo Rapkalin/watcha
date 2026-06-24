@@ -10,7 +10,9 @@ use Symfony\Component\Security\Core\User\UserCheckerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * Prevents self-registered accounts that have not been approved from authenticating.
+ * Prevents accounts that have not been approved by a maintainer/admin from authenticating.
+ * E-mail verification is informational only and does not gate login — an admin can approve an
+ * account whose e-mail is not yet verified, and approval grants access.
  */
 final class AppUserChecker implements UserCheckerInterface
 {

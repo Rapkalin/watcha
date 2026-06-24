@@ -82,6 +82,7 @@ final class BootstrapAdminCommand extends Command
         $user->setEmail($email)
             ->setRoles([User::ROLE_ADMIN])
             ->setApproved(true)
+            ->setEmailVerified(true)
             ->setPassword($this->passwordHasher->hashPassword($user, $password));
 
         $this->userRepository->save($user);

@@ -75,6 +75,7 @@ final class CreateUserCommand extends Command
         $user->setEmail($email)
             ->setRoles($roles)
             ->setApproved(true)
+            ->setEmailVerified(true)
             ->setPassword($this->passwordHasher->hashPassword($user, $password));
 
         $this->userRepository->save($user);

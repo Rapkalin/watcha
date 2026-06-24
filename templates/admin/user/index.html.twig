@@ -33,12 +33,16 @@
             <div class="card__body" style="padding-top:0">
                 <div class="table-wrap">
                     <table class="table">
-                        <thead><tr><th>E-mail</th><th>Nom</th><th>Demandé le</th><th></th></tr></thead>
+                        <thead><tr><th>E-mail</th><th>Nom</th><th>E-mail vérifié</th><th>Demandé le</th><th></th></tr></thead>
                         <tbody>
                         {% for user in pending %}
                             <tr>
                                 <td>{{ user.email }}</td>
                                 <td class="muted">{{ user.displayName ?? '—' }}</td>
+                                <td>
+                                    {% if user.emailVerified %}<span class="badge badge--low">Oui</span>
+                                    {% else %}<span class="badge badge--medium">Non</span>{% endif %}
+                                </td>
                                 <td class="muted">{{ user.createdAt|date('d/m/Y H:i') }}</td>
                                 <td style="text-align:right">
                                     <form method="post" action="{{ path('app_admin_user_approve', {id: user.id}) }}" class="inline-form">
@@ -70,6 +74,8 @@
                             <td>
                                 {% if user.approved %}<span class="badge badge--low">Approuvé</span>
                                 {% else %}<span class="badge badge--medium">En attente</span>{% endif %}
+                                {% if user.emailVerified %}<span class="badge badge--info">E-mail vérifié</span>
+                                {% else %}<span class="badge">E-mail non vérifié</span>{% endif %}
                             </td>
                             {% if is_admin %}
                                 <td>

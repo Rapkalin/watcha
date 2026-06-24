@@ -28,8 +28,7 @@ services:
                 condition: service_healthy
         environment:
             APP_ENV: ${APP_ENV:-dev}
-            DATABASE_URL: "mysql://app:app@database:3306/watcha?serverVersion=8.0&charset=utf8mb4"
-            MAILER_DSN: "smtp://mailer:1025"
+            # MAILER_DSN: "smtp://mailer:1025" # Used to test with mailpit
         volumes:
             - .:/app:cached
 

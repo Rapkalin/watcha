@@ -14,6 +14,10 @@
                 </div>
                 <div class="card__body">
                     {{ form_start(registrationForm, {attr: {class: 'form'}}) }}
+                        {# Honeypot: kept off-screen and hidden from assistive tech; only bots fill it. #}
+                        <div aria-hidden="true" style="position:absolute;left:-5000px;top:-5000px;height:0;overflow:hidden">
+                            {{ form_widget(registrationForm.website) }}
+                        </div>
                         <div class="form-row">
                             {{ form_label(registrationForm.email) }}
                             {{ form_widget(registrationForm.email) }}

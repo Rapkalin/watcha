@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
-# PHP-FPM image for local development of Watcha (Symfony 7.4 / PHP 8.3).
-FROM php:8.3-fpm-alpine
+# PHP-FPM image for local development of Watcha (Symfony 7.4 / PHP 8.4).
+FROM php:8.4-fpm-alpine
 
 # System packages required to build PHP extensions and run Composer.
 RUN apk add --no-cache \

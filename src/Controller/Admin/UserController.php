@@ -6,6 +6,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\Mail\Mailer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -39,7 +40,7 @@ final class UserController extends AbstractController
     }
 
     #[Route('/{id}/approve', name: 'app_admin_user_approve', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function approve(Request $request, User $user, UserRepository $userRepository): Response
+    public function approve(Request $request, User $user, UserRepository $userRepository, Mailer $mailer): Response
     {
         $this->validateCsrf($request, 'approve'.$user->getId());
 
@@ -47,6 +48,9 @@ final class UserController extends AbstractController
         $approver = $this->getUser();
         $user->approve($approver);
         $userRepository->save($user);
+
+        // Let the user know they can now sign in.
+        $mailer->notifyAccountApproved($user);
 
         $this->addFlash('success', sprintf('Compte "%s" approuvé.', $user->getEmail()));
 

@@ -1,0 +1,7 @@
+framework:
+    rate_limiter:
+        # Caps self-registration attempts per client IP to curb spam/bot sign-ups.
+        registration:
+            policy: 'fixed_window'
+            limit: 5
+            interval: '1 hour'

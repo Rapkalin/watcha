@@ -1,0 +1,20 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block subject %}Confirmez votre adresse e-mail{% endblock %}
+
+{% block content %}
+    <p style="margin:0 0 16px;">Bonjour{% if displayName %} {{ displayName }}{% endif %},</p>
+    <p style="margin:0 0 16px;">
+        Merci de votre inscription sur Watcha. Confirmez votre adresse e-mail en cliquant sur le
+        bouton ci-dessous. Votre compte sera ensuite soumis à la validation d'un administrateur.
+    </p>
+    <p style="margin:0 0 8px;">
+        <a href="{{ verifyUrl }}" style="display:inline-block;padding:10px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">
+            Confirmer mon adresse
+        </a>
+    </p>
+    <p style="margin:16px 0 0;font-size:13px;color:#6b7280;">
+        Ce lien expire après un certain délai. Si vous n'êtes pas à l'origine de cette inscription,
+        ignorez cet e-mail.
+    </p>
+{% endblock %}

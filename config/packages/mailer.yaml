@@ -1,3 +1,6 @@
 framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
+        # Default sender applied to every email that doesn't set its own "From".
+        headers:
+            from: '%env(MAILER_FROM)%'

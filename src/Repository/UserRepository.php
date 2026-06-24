@@ -80,14 +80,40 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      */
     public function countApprovedAdmins(): int
     {
-        $approved = $this->createQueryBuilder('u')
+        return count(array_filter(
+            $this->findApprovedWithRole(),
+            static fn (User $u) => in_array(User::ROLE_ADMIN, $u->getRoles(), true),
+        ));
+    }
+
+    /**
+     * E-mail addresses of the approved maintainers/admins, i.e. the people who can approve a
+     * pending account. Used to notify them of new self-registrations.
+     *
+     * @return list<string>
+     */
+    public function findApproverEmails(): array
+    {
+        $approvers = array_filter(
+            $this->findApprovedWithRole(),
+            static fn (User $u) => in_array(User::ROLE_MAINTAINER, $u->getRoles(), true)
+                || in_array(User::ROLE_ADMIN, $u->getRoles(), true),
+        );
+
+        return array_values(array_map(static fn (User $u) => $u->getEmail(), $approvers));
+    }
+
+    /**
+     * All approved users. Roles live in a JSON column, so callers filter on roles in PHP to
+     * stay portable (no MySQL-specific JSON_CONTAINS DQL function required).
+     *
+     * @return User[]
+     */
+    private function findApprovedWithRole(): array
+    {
+        return $this->createQueryBuilder('u')
             ->andWhere('u.approved = true')
             ->getQuery()
             ->getResult();
-
-        return count(array_filter(
-            $approved,
-            static fn (User $u) => in_array(User::ROLE_ADMIN, $u->getRoles(), true),
-        ));
     }
 }

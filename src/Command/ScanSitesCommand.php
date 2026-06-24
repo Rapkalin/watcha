@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\SiteRepository;
+use App\Service\Alert\AlertNotifier;
 use App\Service\SiteMonitor;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,6 +22,7 @@ final class ScanSitesCommand extends Command
     public function __construct(
         private readonly SiteRepository $siteRepository,
         private readonly SiteMonitor $monitor,
+        private readonly AlertNotifier $alertNotifier,
     ) {
         parent::__construct();
     }
@@ -54,6 +56,12 @@ final class ScanSitesCommand extends Command
 
         $io->table(['Site', 'Techno', 'Version', 'Dernière', 'Alertes (ouvertes/résolues)'], $rows);
         $io->success(sprintf('Scan terminé. %d nouvelle(s) alerte(s).', $createdAlerts));
+
+        // Notify owners about their new alerts (one digest per owner).
+        $notified = $this->alertNotifier->notifyPending();
+        if ($notified > 0) {
+            $io->info(sprintf('%d alerte(s) notifiée(s) par e-mail.', $notified));
+        }
 
         return Command::SUCCESS;
     }
