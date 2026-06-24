@@ -97,6 +97,10 @@ fi
 ${PHP_BIN} bin/console cache:clear  --no-interaction
 ${PHP_BIN} bin/console cache:warmup --no-interaction
 ${PHP_BIN} bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
+
+# Ensure a default admin exists (idempotent: no-op once one is present). Credentials come
+# from ADMIN_EMAIL / ADMIN_PASSWORD in shared/.env; skipped with a warning if unset.
+${PHP_BIN} bin/console app:admin:bootstrap --no-interaction
 EOF
 
 echo "✔ Watcha deployed in place at ${DEPLOY_DIR}/website."
