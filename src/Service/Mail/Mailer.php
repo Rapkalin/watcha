@@ -12,6 +12,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use SymfonyCasts\Bundle\ResetPassword\Model\ResetPasswordToken;
 
 /**
  * Central place for the application's transactional e-mails. Every send is wrapped so that a mail
@@ -120,6 +121,23 @@ final class Mailer
             ]);
 
         return $this->send($email, 'alert digest');
+    }
+
+    /**
+     * Sends the password-reset link to a user who requested it.
+     */
+    public function sendPasswordReset(User $user, ResetPasswordToken $resetToken): bool
+    {
+        $email = (new TemplatedEmail())
+            ->to(new Address($user->getEmail(), $user->getDisplayName() ?? ''))
+            ->subject('Watcha — réinitialisation de votre mot de passe')
+            ->htmlTemplate('emails/reset_password.html.twig')
+            ->context([
+                'displayName' => $user->getDisplayName(),
+                'resetToken' => $resetToken,
+            ]);
+
+        return $this->send($email, 'password reset');
     }
 
     private function send(TemplatedEmail $email, string $description): bool

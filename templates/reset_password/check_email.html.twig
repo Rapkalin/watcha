@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}E-mail envoyé — Watcha{% endblock %}
+
+{% block layout %}
+    <div class="auth">
+        <div class="auth__card">
+            <div class="auth__brand"><span class="sidebar__logo">🛡️</span> Watcha</div>
+
+            <div class="card">
+                <div class="card__header">
+                    <div class="card__title">Vérifiez votre boîte mail</div>
+                </div>
+                <div class="card__body">
+                    <p class="text-sm">
+                        Si un compte correspond à l'adresse saisie, un e-mail contenant un lien de
+                        réinitialisation vient d'être envoyé. Pensez à vérifier vos spams.
+                    </p>
+                    <p class="text-sm muted">
+                        Ce lien est valable {{ (tokenLifetime / 3600)|round }} heure(s). Passé ce délai,
+                        relancez une demande.
+                    </p>
+                </div>
+                <div class="card__footer text-sm muted">
+                    <a href="{{ path('app_login') }}" style="text-decoration:underline">Retour à la connexion</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

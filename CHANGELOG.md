@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "account approved" to the user, and a per-owner digest of new CVE/update alerts.
 - E-mail address verification on registration via `symfonycasts/verify-email-bundle` (signed,
   expiring links; `User.emailVerified`), with the verification route `/register/verify`.
+- Forgot-password flow via `symfonycasts/reset-password-bundle`: request page, confirmation page
+  and tokenised reset link e-mailed to the user (`/reset-password`), plus a "forgot password?" link
+  on the login page. The request page never reveals whether an account exists.
 - Idempotent `app:admin:bootstrap` console command that creates the default admin from
   `ADMIN_EMAIL`/`ADMIN_PASSWORD` only when no approved admin exists. Wired into the deploy script
   (after migrations) and `make fixtures-admin`, so admin creation uses the same mechanism

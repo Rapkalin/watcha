@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau mot de passe — Watcha{% endblock %}
+
+{% block layout %}
+    <div class="auth">
+        <div class="auth__card">
+            <div class="auth__brand"><span class="sidebar__logo">🛡️</span> Watcha</div>
+
+            <div class="card">
+                <div class="card__header">
+                    <div class="card__title">Choisir un nouveau mot de passe</div>
+                </div>
+                <div class="card__body">
+                    {{ form_start(resetForm, {attr: {class: 'form'}}) }}
+                        <div class="form-row">
+                            {{ form_label(resetForm.plainPassword.first) }}
+                            {{ form_widget(resetForm.plainPassword.first) }}
+                            {{ form_errors(resetForm.plainPassword.first) }}
+                        </div>
+                        <div class="form-row">
+                            {{ form_label(resetForm.plainPassword.second) }}
+                            {{ form_widget(resetForm.plainPassword.second) }}
+                            {{ form_errors(resetForm.plainPassword.second) }}
+                        </div>
+                        <button class="btn btn--block" type="submit">Réinitialiser le mot de passe</button>
+                    {{ form_end(resetForm) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

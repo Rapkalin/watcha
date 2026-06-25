@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mot de passe oublié — Watcha{% endblock %}
+
+{% block layout %}
+    <div class="auth">
+        <div class="auth__card">
+            <div class="auth__brand"><span class="sidebar__logo">🛡️</span> Watcha</div>
+
+            {% for message in app.flashes('reset_password_error') %}
+                <div class="alert alert--error"><span>{{ message }}</span></div>
+            {% endfor %}
+
+            <div class="card">
+                <div class="card__header">
+                    <div class="card__title">Mot de passe oublié</div>
+                    <div class="card__desc">Saisissez votre adresse e-mail : si un compte existe, vous recevrez un lien de réinitialisation.</div>
+                </div>
+                <div class="card__body">
+                    {{ form_start(requestForm, {attr: {class: 'form'}}) }}
+                        <div class="form-row">
+                            {{ form_label(requestForm.email) }}
+                            {{ form_widget(requestForm.email) }}
+                            {{ form_errors(requestForm.email) }}
+                        </div>
+                        <button class="btn btn--block" type="submit">Envoyer le lien</button>
+                    {{ form_end(requestForm) }}
+                </div>
+                <div class="card__footer text-sm muted">
+                    <a href="{{ path('app_login') }}" style="text-decoration:underline">Retour à la connexion</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
