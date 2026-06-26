@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-06-26
+
+### Added
+- Manual version validation: when a version is set by hand, scanning (or saving the override) now
+  checks it against the technology's published releases. An unknown version is reported and CVE
+  matching is skipped rather than run against a version that does not exist; a valid version
+  unlocks CVE matching as before. Releases are looked up on Packagist (Symfony/Laravel/Drupal) and
+  wordpress.org (WordPress), cached for an hour; an unreachable source is treated as "unverified"
+  so a real version is never wrongly rejected (`LatestVersionResolver::versionExists`).
+
+### Fixed
+- **Security (SSRF):** the site scanner now refuses to connect to private, loopback and link-local
+  addresses — re-checked on every redirect — via a dedicated `NoPrivateNetworkHttpClient`
+  (`app.scanner_http_client`) used by `SiteScanner` and `WordPressDetector`. URLs are also
+  restricted to the `http`/`https` schemes. Previously any approved user could make the server
+  fetch internal hosts (e.g. cloud metadata at `169.254.169.254`) by registering a crafted URL.
+
+### Changed
+- The scanner/feed `User-Agent` (`APP_HTTP_USER_AGENT`) defaults to a browser-like value so fewer
+  sites/WAFs refuse the scan; switch it back to an identifying `watcha/...` string if preferred.
+
 ## [1.1.0] — 2026-06-24
 
 ### Added
@@ -75,5 +96,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker development stack, GitHub Actions CI/CD (quality, tests, security, secret scanning,
   build, deploy) and 1&1 deployment guide.
 
+[1.2.0]: https://github.com/Rapkalin/watcha/releases/tag/1.2.0
 [1.1.0]: https://github.com/Rapkalin/watcha/releases/tag/1.1.0
 [1.0.0]: https://github.com/Rapkalin/watcha/releases/tag/1.0.0
