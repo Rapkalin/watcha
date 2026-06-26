@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-06-26
+
+### Added
+- Page-availability checker: a "Scanner les pages" button reads the site's `/sitemap.xml` (following
+  a sitemap index one level deep) and reports the HTTP status of every listed page (which return
+  200 and which fail, with the error code). Checks run concurrently through the SSRF-safe HTTP
+  client, are bounded (200 pages, 10 sub-sitemaps), and are stored as history (`PageScan` /
+  `PageResult`) on a dedicated page per site.
+
+### Changed
+- Scans are now driven by the technology and version the owner enters by hand. The "Scanner (CVE)"
+  button stays disabled until both are set; clicking it looks up matching CVEs and the latest stable
+  release for that version. Creating a site now redirects to the technology/version form.
+
+### Removed
+- Automatic technology/version detection by URL scanning (the `App\Service\Detection` layer and its
+  detectors). It could not read the version of Symfony/Laravel sites anyway; the manual entry it was
+  paired with is now the single source of truth.
+
 ## [1.2.0] — 2026-06-26
 
 ### Added
@@ -96,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker development stack, GitHub Actions CI/CD (quality, tests, security, secret scanning,
   build, deploy) and 1&1 deployment guide.
 
+[1.3.0]: https://github.com/Rapkalin/watcha/releases/tag/1.3.0
 [1.2.0]: https://github.com/Rapkalin/watcha/releases/tag/1.2.0
 [1.1.0]: https://github.com/Rapkalin/watcha/releases/tag/1.1.0
 [1.0.0]: https://github.com/Rapkalin/watcha/releases/tag/1.0.0
