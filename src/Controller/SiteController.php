@@ -48,7 +48,11 @@ final class SiteController extends AbstractController
             $siteRepository->save($site);
             // Immediately scan so the user sees results without waiting for the cron.
             $result = $monitor->refresh($site);
-            $this->addFlash('success', $result->scan->message);
+            if ($result->alerts->manualVersionInvalid) {
+                $this->addFlash('error', $this->manualVersionError($site));
+            } else {
+                $this->addFlash('success', $result->scan->message);
+            }
 
             return $this->redirectToRoute('app_site_show', ['id' => $site->getId()]);
         }
@@ -78,12 +82,16 @@ final class SiteController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             // Recompute alerts right away with the effective version (unlocks CVE matching).
-            $alertEvaluator->evaluate($site, flush: false);
+            $report = $alertEvaluator->evaluate($site, flush: false);
             $siteRepository->save($site);
 
-            $this->addFlash('success', $site->hasManualOverride()
-                ? sprintf('Override manuel enregistré (%s %s). Alertes recalculées.', $site->getEffectiveTechnology()?->label() ?? '', $site->getManualVersion() ?? '')
-                : 'Détection automatique réactivée pour ce site.');
+            if ($report->manualVersionInvalid) {
+                $this->addFlash('error', $this->manualVersionError($site));
+            } else {
+                $this->addFlash('success', $site->hasManualOverride()
+                    ? sprintf('Override manuel enregistré (%s %s). Alertes recalculées.', $site->getEffectiveTechnology()?->label() ?? '', $site->getManualVersion() ?? '')
+                    : 'Détection automatique réactivée pour ce site.');
+            }
 
             return $this->redirectToRoute('app_site_show', ['id' => $site->getId()]);
         }
@@ -101,7 +109,11 @@ final class SiteController extends AbstractController
         $this->validateCsrf($request, 'scan'.$site->getId());
 
         $result = $monitor->refresh($site);
-        $this->addFlash('success', $result->scan->message);
+        if ($result->alerts->manualVersionInvalid) {
+            $this->addFlash('error', $this->manualVersionError($site));
+        } else {
+            $this->addFlash('success', $result->scan->message);
+        }
 
         return $this->redirectToRoute('app_site_show', ['id' => $site->getId()]);
     }
@@ -123,5 +135,14 @@ final class SiteController extends AbstractController
         if (!$this->isCsrfTokenValid($id, (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Jeton CSRF invalide.');
         }
+    }
+
+    private function manualVersionError(Site $site): string
+    {
+        return sprintf(
+            "La version manuelle « %s » n'existe pas pour %s. Vérifiez la version saisie : les alertes CVE n'ont pas été recalculées.",
+            $site->getManualVersion() ?? '',
+            $site->getEffectiveTechnology()?->label() ?? 'cette technologie',
+        );
     }
 }

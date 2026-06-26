@@ -105,6 +105,42 @@ final class AlertEvaluatorTest extends TestCase
         self::assertSame(AlertType::CVE, $persisted[0]->getType());
     }
 
+    public function testInvalidManualVersionIsFlaggedAndSkipsEvaluation(): void
+    {
+        $site = (new Site())->setName('Demo')->setUrl('https://demo.test')
+            ->setManualTechnology(Technology::SYMFONY)
+            ->setManualVersion('6.4.999'); // does not exist
+
+        $advisory = (new Advisory(Technology::SYMFONY, 'osv.dev', 'GHSA-sf'))
+            ->setTitle('Symfony issue')
+            ->setSeverity(Severity::MEDIUM)
+            ->setAffectedConstraint('>=6.3.0,<6.4.40');
+
+        $advisoryRepo = $this->createMock(AdvisoryRepository::class);
+        $advisoryRepo->expects(self::never())->method('findByTechnology');
+        $alertRepo = $this->createMock(SiteAlertRepository::class);
+
+        $persisted = [];
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('persist')->willReturnCallback(static function (object $e) use (&$persisted): void {
+            $persisted[] = $e;
+        });
+
+        $evaluator = new AlertEvaluator(
+            $advisoryRepo,
+            $alertRepo,
+            new VersionComparator(new NullLogger()),
+            $this->stubResolver(null, versionExists: false),
+            $em,
+        );
+
+        $report = $evaluator->evaluate($site, flush: false);
+
+        self::assertTrue($report->manualVersionInvalid);
+        self::assertSame(0, $report->created);
+        self::assertCount(0, $persisted);
+    }
+
     public function testCreatesUpdateAlertWhenOutdatedAndNoCve(): void
     {
         $site = (new Site())->setName('Demo')->setUrl('https://demo.test')
@@ -139,16 +175,21 @@ final class AlertEvaluatorTest extends TestCase
         self::assertSame(AlertType::UPDATE_AVAILABLE, $persisted[0]->getType());
     }
 
-    private function stubResolver(?string $latest): LatestVersionResolverInterface
+    private function stubResolver(?string $latest, ?bool $versionExists = true): LatestVersionResolverInterface
     {
-        return new class($latest) implements LatestVersionResolverInterface {
-            public function __construct(private readonly ?string $latest)
+        return new class($latest, $versionExists) implements LatestVersionResolverInterface {
+            public function __construct(private readonly ?string $latest, private readonly ?bool $versionExists)
             {
             }
 
             public function latestStable(Technology $technology): ?string
             {
                 return $this->latest;
+            }
+
+            public function versionExists(Technology $technology, string $version): ?bool
+            {
+                return $this->versionExists;
             }
         };
     }

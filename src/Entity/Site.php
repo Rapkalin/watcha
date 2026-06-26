@@ -34,7 +34,7 @@ class Site
 
     #[ORM\Column(length: 512)]
     #[Assert\NotBlank]
-    #[Assert\Url(requireTld: true)]
+    #[Assert\Url(protocols: ['http', 'https'], requireTld: true)]
     #[Assert\Length(max: 512)]
     private string $url = '';
 

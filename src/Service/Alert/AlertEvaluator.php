@@ -34,7 +34,21 @@ final class AlertEvaluator
     {
         $report = new AlertReport();
 
-        if (null === $site->getEffectiveTechnology()) {
+        $technology = $site->getEffectiveTechnology();
+        if (null === $technology) {
+            if ($flush) {
+                $this->em->flush();
+            }
+
+            return $report;
+        }
+
+        // A manually pinned version is matched verbatim against advisories, so a typo would silently
+        // produce wrong (or no) alerts. Validate it against the published releases first: if it does
+        // not exist, flag it and skip evaluation rather than match CVEs against a version that isn't real.
+        $manualVersion = $site->getManualVersion();
+        if (null !== $manualVersion && false === $this->latestVersionResolver->versionExists($technology, $manualVersion)) {
+            $report->manualVersionInvalid = true;
             if ($flush) {
                 $this->em->flush();
             }
