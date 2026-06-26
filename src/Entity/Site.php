@@ -13,7 +13,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * A website monitored by its owner. Its technology and version are detected by scanning the URL.
+ * A website monitored by its owner. The owner enters its technology and version by hand; a scan
+ * then looks up matching CVEs and the latest stable release. Page availability is tracked
+ * separately via {@see PageScan}.
  */
 #[ORM\Entity(repositoryClass: SiteRepository::class)]
 class Site
@@ -178,6 +180,15 @@ class Site
     public function hasManualOverride(): bool
     {
         return null !== $this->manualVersion || null !== $this->manualTechnology;
+    }
+
+    /**
+     * A scan (CVE + latest stable lookup) needs both the technology and the version, which the
+     * owner enters by hand. Until then the scan button stays disabled.
+     */
+    public function isReadyForScan(): bool
+    {
+        return null !== $this->getEffectiveTechnology() && null !== $this->getEffectiveVersion();
     }
 
     /** Technology used everywhere (manual override wins over auto-detection). */

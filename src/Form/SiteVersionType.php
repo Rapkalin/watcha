@@ -14,8 +14,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Lets the owner override the auto-detected technology and version. Submitting a version pins it
- * so future scans don't overwrite it (handled in the controller).
+ * The owner enters the technology and version of their application by hand. Both are needed to run
+ * a scan (CVE matching + latest stable lookup); the scan button stays disabled until they are set.
  *
  * @extends AbstractType<Site>
  */
@@ -28,14 +28,14 @@ final class SiteVersionType extends AbstractType
                 'class' => Technology::class,
                 'label' => 'Technologie',
                 'required' => false,
-                'placeholder' => 'Détection automatique',
+                'placeholder' => '— Choisir —',
                 'choice_label' => static fn (Technology $t) => $t->label(),
             ])
             ->add('manualVersion', TextType::class, [
                 'label' => 'Version',
                 'required' => false,
                 'attr' => ['placeholder' => 'ex. 7.2.0'],
-                'help' => 'Laissez vide pour revenir à la détection automatique.',
+                'help' => 'Technologie et version sont nécessaires pour lancer un scan.',
                 'constraints' => [
                     new Assert\Length(max: 50),
                     new Assert\Regex(

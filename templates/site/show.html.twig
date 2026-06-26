@@ -13,10 +13,18 @@
             <p><a href="{{ site.url }}" target="_blank" rel="noopener" style="text-decoration:underline">{{ site.url }}</a></p>
         </div>
         <div class="row">
-            <a href="{{ path('app_site_edit', {id: site.id}) }}" class="btn btn--secondary">✏️ Version</a>
+            <a href="{{ path('app_site_edit', {id: site.id}) }}" class="btn btn--secondary">✏️ Techno / version</a>
             <form method="post" action="{{ path('app_site_scan', {id: site.id}) }}" class="inline-form">
                 <input type="hidden" name="_token" value="{{ csrf_token('scan' ~ site.id) }}">
-                <button class="btn btn--secondary" type="submit">🔄 Re-scanner</button>
+                <button class="btn btn--secondary" type="submit"
+                        {{ site.isReadyForScan ? '' : 'disabled' }}
+                        title="{{ site.isReadyForScan ? 'Rechercher les CVE et la dernière version stable' : 'Renseignez la technologie et la version pour activer le scan' }}">
+                    🔄 Scanner (CVE)
+                </button>
+            </form>
+            <form method="post" action="{{ path('app_site_page_scan', {id: site.id}) }}" class="inline-form">
+                <input type="hidden" name="_token" value="{{ csrf_token('pagescan' ~ site.id) }}">
+                <button class="btn btn--secondary" type="submit" title="Vérifier la disponibilité de toutes les pages du sitemap">🌐 Scanner les pages</button>
             </form>
             <form method="post" action="{{ path('app_site_delete', {id: site.id}) }}" class="inline-form"
                   onsubmit="return confirm('Supprimer ce site et ses alertes ?');">
@@ -26,17 +34,17 @@
         </div>
     </div>
 
+    {% if not site.isReadyForScan %}
+        <div class="alert alert--info">
+            <span>Renseignez la <strong>technologie</strong> et la <strong>version</strong> de votre application pour activer le scan des CVE. <a href="{{ path('app_site_edit', {id: site.id}) }}" style="text-decoration:underline">Le faire maintenant</a>.</span>
+        </div>
+    {% endif %}
+
     <div class="grid grid--stats">
         <div class="card"><div class="card__body">
-            {% if site.manualVersion %}
-                {# Both values shown when a manual override exists #}
-                <div class="stat__label">Version</div>
-                <div class="stat__value mono" style="font-size:1.4rem">{{ site.manualVersion }} <span class="badge badge--info">📌 Manuelle</span></div>
-                <div class="stat__hint">Détectée automatiquement : <span class="mono">{{ site.detectedVersion ?? 'inconnue' }}</span></div>
-            {% else %}
-                <div class="stat__label">Version détectée</div>
-                <div class="stat__value mono" style="font-size:1.4rem">{{ site.detectedVersion ?? '—' }}</div>
-            {% endif %}
+            <div class="stat__label">Version (saisie)</div>
+            <div class="stat__value mono" style="font-size:1.4rem">{{ site.effectiveVersion ?? '—' }}</div>
+            <div class="stat__hint">Technologie : {{ site.effectiveTechnology ? site.effectiveTechnology.label : '—' }}</div>
         </div></div>
         <div class="card"><div class="card__body">
             <div class="stat__label">Dernière version stable</div>
@@ -50,10 +58,30 @@
     </div>
 
     <div class="card mt-3">
-        <div class="card__header"><div class="card__title">Dernier scan</div></div>
+        <div class="card__header"><div class="card__title">Dernier scan CVE</div></div>
         <div class="card__body" style="padding-top:0">
             <p class="text-sm">{{ site.lastScanMessage ?? 'Aucun scan effectué.' }}</p>
             <p class="muted text-sm mt-1">{{ site.lastScannedAt ? site.lastScannedAt|date('d/m/Y H:i') : '' }}</p>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card__header row row--between">
+            <div class="card__title">Disponibilité des pages</div>
+            <a href="{{ path('app_site_pages', {id: site.id}) }}" class="text-sm" style="text-decoration:underline">Historique →</a>
+        </div>
+        <div class="card__body" style="padding-top:0">
+            {% if latestPageScan %}
+                <p class="text-sm">
+                    {{ latestPageScan.totalPages }} page(s) ·
+                    <span class="badge badge--success">{{ latestPageScan.okCount }} OK</span>
+                    {% if latestPageScan.errorCount %}<span class="badge badge--error">{{ latestPageScan.errorCount }} en erreur</span>{% endif %}
+                </p>
+                {% if latestPageScan.note %}<p class="muted text-sm mt-1">{{ latestPageScan.note }}</p>{% endif %}
+                <p class="muted text-sm mt-1">{{ latestPageScan.scannedAt|date('d/m/Y H:i') }}</p>
+            {% else %}
+                <p class="muted text-sm">Aucun scan de pages effectué. Utilisez « Scanner les pages ».</p>
+            {% endif %}
         </div>
     </div>
 

@@ -18,11 +18,11 @@ services:
     App\:
         resource: '../src/'
 
-    # HTTP client dedicated to scanning user-supplied site URLs. It wraps the default client and
-    # refuses to connect to private, loopback and link-local addresses — re-checked on every
-    # redirect — to prevent SSRF (e.g. http://169.254.169.254/, internal hosts), since any approved
-    # user can register an arbitrary URL that is then fetched server-side. The advisory providers
-    # (OSV, WPScan, Packagist) keep the default client: they only call fixed, trusted hosts.
+    # HTTP client dedicated to fetching user-supplied site URLs (the page-availability checker). It
+    # wraps the default client and refuses to connect to private, loopback and link-local addresses
+    # — re-checked on every redirect — to prevent SSRF (e.g. http://169.254.169.254/, internal
+    # hosts), since any approved user can register an arbitrary URL that is then fetched server-side.
+    # The advisory providers (OSV, WPScan, Packagist) keep the default client: only fixed hosts.
     app.scanner_http_client:
         class: Symfony\Component\HttpClient\NoPrivateNetworkHttpClient
         arguments:
@@ -32,18 +32,11 @@ services:
     _instanceof:
         App\Service\Cve\AdvisoryProviderInterface:
             tags: ['app.advisory_provider']
-        App\Service\Detection\TechnologyDetectorInterface:
-            tags: ['app.technology_detector']
 
     App\Service\Cve\AdvisorySynchronizer:
         arguments:
             $providers: !tagged_iterator app.advisory_provider
 
-    App\Service\Detection\SiteScanner:
-        arguments:
-            $detectors: !tagged_iterator app.technology_detector
-            $httpClient: '@app.scanner_http_client'
-
-    App\Service\Detection\Detector\WordPressDetector:
+    App\Service\Page\SitemapScanner:
         arguments:
             $httpClient: '@app.scanner_http_client'

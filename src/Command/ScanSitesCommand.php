@@ -15,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:sites:scan',
-    description: 'Scans every monitored site, refreshes detected versions and (re)evaluates alerts.',
+    description: 'Re-evaluates CVE alerts and the latest stable version for every monitored site.',
 )]
 final class ScanSitesCommand extends Command
 {
@@ -43,14 +43,14 @@ final class ScanSitesCommand extends Command
         $createdAlerts = 0;
 
         foreach ($sites as $site) {
-            $result = $this->monitor->refresh($site);
-            $createdAlerts += $result->alerts->created + $result->alerts->reopened;
+            $report = $this->monitor->refresh($site);
+            $createdAlerts += $report->created + $report->reopened;
             $rows[] = [
                 $site->getName(),
-                $site->getTechnology()?->label() ?? '—',
-                $site->getDetectedVersion() ?? '—',
+                $site->getEffectiveTechnology()?->label() ?? '—',
+                $site->getEffectiveVersion() ?? '—',
                 $site->getLatestKnownVersion() ?? '—',
-                sprintf('+%d / -%d', $result->alerts->created + $result->alerts->reopened, $result->alerts->resolved),
+                sprintf('+%d / -%d', $report->created + $report->reopened, $report->resolved),
             ];
         }
 

@@ -8,7 +8,7 @@
     <div class="page-header">
         <div>
             <h1>Mes sites</h1>
-            <p>Sites surveillés et technologie détectée.</p>
+            <p>Sites surveillés, technologie et version saisies.</p>
         </div>
         <a href="{{ path('app_site_new') }}" class="btn">+ Ajouter un site</a>
     </div>
@@ -30,7 +30,6 @@
                         <div class="muted text-sm mt-1">{{ site.url }}</div>
                         <div class="row row--wrap mt-2 text-sm">
                             <span>Version&nbsp;: <strong class="mono">{{ site.effectiveVersion ?? '—' }}</strong></span>
-                            {% if site.manualVersion %}<span class="badge badge--info" title="Détectée : {{ site.detectedVersion ?? 'inconnue' }}">📌 Manuelle</span>{% endif %}
                             {% if site.updateAvailable %}<span class="badge badge--info">MAJ {{ site.latestKnownVersion }}</span>{% endif %}
                         </div>
                         <div class="muted text-sm mt-1">

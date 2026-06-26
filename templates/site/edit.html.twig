@@ -6,21 +6,13 @@
 {% block content %}
     <div class="page-header"><div>
         <h1>Technologie & version</h1>
-        <p>Corrigez manuellement la technologie ou la version — utile quand elle n'est pas exposée
-           publiquement (Symfony, Laravel). Une version saisie est <strong>épinglée</strong> et ne sera plus
-           écrasée par les scans.</p>
+        <p>Indiquez la technologie et la version de votre application. Ces deux informations sont
+           nécessaires pour rechercher les CVE et la dernière version stable lors du scan.</p>
     </div></div>
 
     <div class="card" style="max-width:560px">
         <div class="card__body">
             {{ form_start(form, {attr: {class: 'form'}}) }}
-                {% if site.technology or site.detectedVersion %}
-                    <div class="alert alert--info"><span>
-                        Détection automatique : <strong>{{ site.technology ? site.technology.label : 'technologie inconnue' }}
-                        {{ site.detectedVersion ?? '(version non exposée)' }}</strong>.
-                        Les valeurs saisies ci-dessous prennent le dessus pour le calcul des CVE.
-                    </span></div>
-                {% endif %}
                 <div class="form-row">
                     {{ form_label(form.manualTechnology) }}
                     {{ form_widget(form.manualTechnology) }}

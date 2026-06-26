@@ -27,7 +27,7 @@ final class SiteType extends AbstractType
                 'label' => 'URL',
                 'default_protocol' => 'https',
                 'attr' => ['placeholder' => 'https://exemple.com'],
-                'help' => "L'URL sera analysée pour détecter le CMS/framework et sa version.",
+                'help' => "L'URL sert à vérifier la disponibilité des pages (via le sitemap.xml).",
             ]);
     }
 

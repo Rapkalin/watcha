@@ -1,0 +1,83 @@
+{% extends 'layout.html.twig' %}
+
+{% block title %}Pages de {{ site.name }} — Watcha{% endblock %}
+{% block heading %}Disponibilité des pages — {{ site.name }}{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <div>
+            <p><a href="{{ path('app_site_show', {id: site.id}) }}" style="text-decoration:underline">← Retour au site</a></p>
+        </div>
+        <div class="row">
+            <form method="post" action="{{ path('app_site_page_scan', {id: site.id}) }}" class="inline-form">
+                <input type="hidden" name="_token" value="{{ csrf_token('pagescan' ~ site.id) }}">
+                <button class="btn btn--primary" type="submit">🌐 Scanner les pages</button>
+            </form>
+        </div>
+    </div>
+
+    {% if latest %}
+        <div class="card">
+            <div class="card__header row row--between">
+                <div class="card__title">Dernier scan — {{ latest.scannedAt|date('d/m/Y H:i') }}</div>
+                <div class="row">
+                    <span class="badge badge--success">{{ latest.okCount }} OK</span>
+                    {% if latest.errorCount %}<span class="badge badge--error">{{ latest.errorCount }} en erreur</span>{% endif %}
+                </div>
+            </div>
+            <div class="card__body" style="padding-top:0">
+                {% if latest.note %}<p class="muted text-sm">{{ latest.note }}</p>{% endif %}
+                {% if latest.results is empty %}
+                    <div class="empty-state">Aucune page vérifiée.</div>
+                {% else %}
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead><tr><th>Page</th><th>Statut</th></tr></thead>
+                            <tbody>
+                            {% for result in latest.results %}
+                                <tr>
+                                    <td><a href="{{ result.url }}" target="_blank" rel="noopener" style="text-decoration:underline">{{ result.url }}</a></td>
+                                    <td>
+                                        {% if result.statusCode is null %}
+                                            <span class="badge badge--error">Injoignable</span>
+                                        {% elseif result.ok %}
+                                            <span class="badge badge--success">{{ result.statusCode }}</span>
+                                        {% else %}
+                                            <span class="badge badge--error">{{ result.statusCode }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">Aucun scan de pages pour l'instant. Cliquez sur « Scanner les pages ».</div>
+    {% endif %}
+
+    {% if history|length > 1 %}
+        <div class="card mt-3">
+            <div class="card__header"><div class="card__title">Historique</div></div>
+            <div class="card__body" style="padding-top:0">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>Date</th><th>Pages</th><th>OK</th><th>Erreurs</th></tr></thead>
+                        <tbody>
+                        {% for scan in history %}
+                            <tr>
+                                <td>{{ scan.scannedAt|date('d/m/Y H:i') }}</td>
+                                <td>{{ scan.totalPages }}</td>
+                                <td>{{ scan.okCount }}</td>
+                                <td>{{ scan.errorCount ? scan.errorCount : '—' }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
