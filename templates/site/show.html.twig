@@ -43,7 +43,10 @@
     <div class="grid grid--stats">
         <div class="card"><div class="card__body">
             <div class="stat__label">Version (saisie)</div>
-            <div class="stat__value mono" style="font-size:1.4rem">{{ site.effectiveVersion ?? '—' }}</div>
+            <div class="stat__value mono" style="font-size:1.4rem">
+                {{ site.effectiveVersion ?? '—' }}
+                {% if site.hasInvalidManualVersion %}<span class="badge badge--error" title="Cette version n'existe pas pour {{ site.effectiveTechnology ? site.effectiveTechnology.label : 'cette technologie' }}">⚠️ Version inexistante</span>{% endif %}
+            </div>
             <div class="stat__hint">Technologie : {{ site.effectiveTechnology ? site.effectiveTechnology.label : '—' }}</div>
         </div></div>
         <div class="card"><div class="card__body">

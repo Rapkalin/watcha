@@ -67,6 +67,13 @@ class Site
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $latestKnownVersion = null;
 
+    /**
+     * Whether the manually entered version is a published release of the technology, as checked at
+     * the last scan. null = not checked / no manual version; true = exists; false = does not exist.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?bool $manualVersionExists = null;
+
     #[ORM\Column(nullable: true)]
     private ?DateTimeImmutable $lastScannedAt = null;
 
@@ -213,6 +220,24 @@ class Site
         $this->latestKnownVersion = $latestKnownVersion;
 
         return $this;
+    }
+
+    public function getManualVersionExists(): ?bool
+    {
+        return $this->manualVersionExists;
+    }
+
+    public function setManualVersionExists(?bool $manualVersionExists): static
+    {
+        $this->manualVersionExists = $manualVersionExists;
+
+        return $this;
+    }
+
+    /** True only when the entered version was checked and found not to exist. */
+    public function hasInvalidManualVersion(): bool
+    {
+        return false === $this->manualVersionExists;
     }
 
     public function getLastScannedAt(): ?DateTimeImmutable

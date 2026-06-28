@@ -103,6 +103,8 @@ final class AlertEvaluatorTest extends TestCase
 
         self::assertSame(1, $report->created);
         self::assertSame(AlertType::CVE, $persisted[0]->getType());
+        // A valid manual version is recorded as existing (drives the UI badge).
+        self::assertTrue($site->getManualVersionExists());
     }
 
     public function testInvalidManualVersionIsFlaggedAndSkipsEvaluation(): void
@@ -130,7 +132,7 @@ final class AlertEvaluatorTest extends TestCase
             $advisoryRepo,
             $alertRepo,
             new VersionComparator(new NullLogger()),
-            $this->stubResolver(null, versionExists: false),
+            $this->stubResolver('6.4.20', versionExists: false),
             $em,
         );
 
@@ -139,6 +141,10 @@ final class AlertEvaluatorTest extends TestCase
         self::assertTrue($report->manualVersionInvalid);
         self::assertSame(0, $report->created);
         self::assertCount(0, $persisted);
+        // The latest stable version depends only on the technology and must be filled regardless.
+        self::assertSame('6.4.20', $site->getLatestKnownVersion());
+        // The non-existent version is recorded as such (drives the "version inexistante" badge).
+        self::assertFalse($site->getManualVersionExists());
     }
 
     public function testCreatesUpdateAlertWhenOutdatedAndNoCve(): void
@@ -173,6 +179,8 @@ final class AlertEvaluatorTest extends TestCase
         self::assertSame('10.3.6', $site->getLatestKnownVersion());
         self::assertSame(1, $report->created);
         self::assertSame(AlertType::UPDATE_AVAILABLE, $persisted[0]->getType());
+        // No manual version entered → existence is "not checked" (null), so no badge.
+        self::assertNull($site->getManualVersionExists());
     }
 
     private function stubResolver(?string $latest, ?bool $versionExists = true): LatestVersionResolverInterface

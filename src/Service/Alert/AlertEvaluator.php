@@ -43,11 +43,20 @@ final class AlertEvaluator
             return $report;
         }
 
+        // The latest stable release depends only on the technology, so record it as soon as the
+        // technology is known — even if the version is still missing or turns out to be invalid.
+        $latest = $this->latestVersionResolver->latestStable($technology);
+        $site->setLatestKnownVersion($latest);
+
         // A manually pinned version is matched verbatim against advisories, so a typo would silently
-        // produce wrong (or no) alerts. Validate it against the published releases first: if it does
-        // not exist, flag it and skip evaluation rather than match CVEs against a version that isn't real.
+        // produce wrong (or no) alerts. Validate it against the published releases first and remember
+        // the outcome (for the UI badge): if it does not exist, flag it and skip CVE matching rather
+        // than match against a version that isn't real.
         $manualVersion = $site->getManualVersion();
-        if (null !== $manualVersion && false === $this->latestVersionResolver->versionExists($technology, $manualVersion)) {
+        $versionExists = null === $manualVersion ? null : $this->latestVersionResolver->versionExists($technology, $manualVersion);
+        $site->setManualVersionExists($versionExists);
+
+        if (false === $versionExists) {
             $report->manualVersionInvalid = true;
             if ($flush) {
                 $this->em->flush();
@@ -56,7 +65,7 @@ final class AlertEvaluator
             return $report;
         }
 
-        $this->evaluateUpdate($site, $report);
+        $this->evaluateUpdate($site, $latest, $report);
         $this->evaluateCves($site, $report);
 
         if ($flush) {
@@ -66,16 +75,8 @@ final class AlertEvaluator
         return $report;
     }
 
-    private function evaluateUpdate(Site $site, AlertReport $report): void
+    private function evaluateUpdate(Site $site, ?string $latest, AlertReport $report): void
     {
-        $technology = $site->getEffectiveTechnology();
-        if (null === $technology) {
-            return;
-        }
-
-        $latest = $this->latestVersionResolver->latestStable($technology);
-        $site->setLatestKnownVersion($latest);
-
         $current = $site->getEffectiveVersion();
         $outdated = null !== $current && null !== $latest && $this->versions->isOutdated($current, $latest);
 

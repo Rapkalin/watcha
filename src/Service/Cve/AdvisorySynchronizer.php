@@ -31,6 +31,12 @@ final class AdvisorySynchronizer
         $report = new SyncReport();
         $technologies = null !== $only ? [$only] : Technology::all();
 
+        // Guards against the same advisory being yielded more than once in a single run (OSV can
+        // return an id under more than one package/query). The unique index is on (source,
+        // external_id), and nothing is flushed until the end, so a duplicate would otherwise be
+        // persisted twice and abort the whole sync.
+        $seenThisRun = [];
+
         foreach ($technologies as $technology) {
             foreach ($this->providers as $provider) {
                 if (!$provider->supports($technology)) {
@@ -39,6 +45,11 @@ final class AdvisorySynchronizer
 
                 try {
                     foreach ($provider->fetch($technology) as $dto) {
+                        $key = $dto->source."\0".$dto->externalId;
+                        if (isset($seenThisRun[$key])) {
+                            continue;
+                        }
+                        $seenThisRun[$key] = true;
                         $this->upsert($dto, $report);
                     }
                 } catch (AdvisoryFetchException $e) {
