@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-06-28
+
+### Added
+- "Version inexistante" badge on the site detail page and the site list when a manually entered
+  version has been checked and is not a published release of the technology (persisted as
+  `Site.manualVersionExists`).
+
+### Fixed
+- Advisory synchronisation aborting on a duplicate advisory id: OSV can return the same id more than
+  once in a single run and, as nothing is flushed until the end, the duplicate was persisted twice
+  and violated the unique `(source, external_id)` index — leaving the advisory table empty and no
+  CVEs for any site. Occurrences are now de-duplicated within a run (`AdvisorySynchronizer`).
+- The latest stable version is now recorded as soon as the technology is known, even when the
+  entered version is missing or does not exist (previously the lookup was skipped for an invalid
+  version, leaving "dernière version connue" empty).
+
 ## [1.3.0] — 2026-06-26
 
 ### Added
@@ -115,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker development stack, GitHub Actions CI/CD (quality, tests, security, secret scanning,
   build, deploy) and 1&1 deployment guide.
 
+[1.4.0]: https://github.com/Rapkalin/watcha/releases/tag/1.4.0
 [1.3.0]: https://github.com/Rapkalin/watcha/releases/tag/1.3.0
 [1.2.0]: https://github.com/Rapkalin/watcha/releases/tag/1.2.0
 [1.1.0]: https://github.com/Rapkalin/watcha/releases/tag/1.1.0
